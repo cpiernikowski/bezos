@@ -2,7 +2,7 @@
 <html lang="pl-PL">
 <head>
     <script>
-        "use strict"
+        "use strict";
         const ip_alarm = "{{ ip_alarm }}";
         var alarm_status_old = false;
         var alarm_state_old = false;
@@ -91,6 +91,7 @@
                     document.getElementById("alarm_state").innerText = alarm_state ? "ALARM UZBROJONY" : "ALARM NIEUZBROJONY"; // dla kogos kto bedzie robil wyglad - tutaj javascirptem moze byc zamiast tej linijki zmieniany wyglad strony, np kolor jakiegos kolka z czerownego na zielony
                     alarm_state_old = alarm_state;
                 }
+                
                 if (!online) {
                     online = true;
                     html_mark_online();
@@ -117,12 +118,12 @@
             .then(data => {
                 if (data.status === "ok") {
                     if (data.actually_accepted) {
-                        alert(`Udało się zaakceptować alarm, odpowiedź serwera: ${data.message}`);
+                        alert(`Udało się potwierdzić alarm, odpowiedź serwera: ${data.message}`);
                     } else {
                         alert(`Udało się wysłać polecenie potwierdzenia alarmu, lecz alarm nie wymagał potwierdzenia, odpowiedź serwera: ${data.message}`)
                     }
                 } else {
-                    alert(`Zapytanie przeszło, lecz wystąpił inny problem, nie udało się ${action_string} alarmu, odpowiedź serwera: ${data.message}`);
+                    alert(`Zapytanie przeszło, lecz wystąpił inny problem, nie udało się potwierdzić alarmu, odpowiedź serwera: ${data.message}`);
                 }
             })
             .catch(error => {
