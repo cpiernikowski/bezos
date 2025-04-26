@@ -18,12 +18,21 @@ alarm_status = False
 ip_server = "http://127.0.0.1:5000/"
 passphrase = "admin123" # na razie na szytywno tu
 
+MSG_BAD_PASSPHRASE = "Request wasn't successful, passphrase not provided or invalid"
+MSG_OK = "Request was successful"
+
+def passphrase_ok(data):
+    return "passphrase" in data and data["passphrase"] == passphrase
+
 @app.route("/change_alarm_state", methods=["POST"])
 def change_alarm_state():
     global alarm_state
     req_data = request.get_json()
     print(req_data) # debug
 
+    if not passphrase_ok(req_data):
+        return jsonify(status="error", message=MSG_BAD_PASSPHRASE)
+    
     if "state" not in req_data or not isinstance(req_data["state"], bool):
         return jsonify(status="error", message="ERROR: `state` key not present in the request or invalid value")
     else:
@@ -33,27 +42,27 @@ def change_alarm_state():
         elif alarm_state == False:
             print("Rozbrajam alarm...")
 
-    return jsonify(status="ok", message="Request was successful")
+    return jsonify(status="ok", message=MSG_OK)
 
 @app.route("/get_alarm_state", methods=["POST"])
 def get_alarm_state():
     req_data = request.get_json()
     print(req_data) # debug
 
-    if "passphrase" not in req_data or req_data["passphrase"] != passphrase:
-        return jsonify(status="error", message="Request wasn't successful, passphrase not provided or invalid")
+    if not passphrase_ok(req_data):
+        return jsonify(status="error", message=MSG_BAD_PASSPHRASE)
 
-    return jsonify(alarm_state=alarm_state, status="ok", message="Request was successful")
+    return jsonify(alarm_state=alarm_state, status="ok", message=MSG_OK)
 
 @app.route("/get_alarm_status", methods=["POST"])
 def get_alarm_status():
     req_data = request.get_json()
     print(req_data) # debug
 
-    if "passphrase" not in req_data or req_data["passphrase"] != passphrase:
-        return jsonify(status="error", message="Request wasn't successful, passphrase not provided or invalid")
+    if not passphrase_ok(req_data):
+        return jsonify(status="error", message=MSG_BAD_PASSPHRASE)
 
-    return jsonify(alarm_status=alarm_status, status="ok", message="Request was successful")
+    return jsonify(alarm_status=alarm_status, status="ok", message=MSG_OK)
 
 @app.route("/alarm_accept", methods=["POST"])
 def alarm_accept():
@@ -61,12 +70,12 @@ def alarm_accept():
     req_data = request.get_json()
     print(req_data) # debug
 
-    if "passphrase" not in req_data or req_data["passphrase"] != passphrase:
-        return jsonify(status="error", message="Request wasn't successful, passphrase not provided or invalid")
+    if not passphrase_ok(req_data):
+        return jsonify(status="error", message=MSG_BAD_PASSPHRASE)
     
     actually_accepted = alarm_status
     alarm_status = False
-    return jsonify(status="ok", message="Request was successful", actually_accepted=actually_accepted) # actually_accepted - mowi czy rzeczywiscie potwierdzono alarm, bo request normalnie przejdzie nawet jesli nie bylo alarmu podczas potwierzdania, ale niech strona wie co sie dokladnie stalo
+    return jsonify(status="ok", message=MSG_OK, actually_accepted=actually_accepted) # actually_accepted - mowi czy rzeczywiscie potwierdzono alarm, bo request normalnie przejdzie nawet jesli nie bylo alarmu podczas potwierzdania, ale niech strona wie co sie dokladnie stalo
 
 # nie mamy fizycznie czujnika na razie wiec ta funkcja bedzie symulowala wykrywanie ruchu i ewentualne zasygnalizowanie ze powinna byc odpalona awaria
 def read_sensor_output_sim():
