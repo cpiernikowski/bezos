@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pl-PL">
+<head>
+    <script>
+        "use strict"
+        const ip_alarm = "{{ ip_alarm }}";
+        var alarm_status_old = false;
+        var alarm_state_old = false;
+        var online = false;
+
+        const html_mark_online = () => {
+            document.getElementById("online_offline").innerText = "ONLINE";
+        }
+
+        const html_mark_offline = () => {
+            document.getElementById("online_offline").innerText = "OFFLINE";
+        }
+        
+        const change_alarm_state = on => {
+            const action_string = on ? "uzbroić" : "rozbroić";
+
+            fetch(ip_alarm + "/change_alarm_state", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({state: on, passphrase: "{{ passphrase }}"})
+            })
+            .then(response => response.json())
+            .then(data => {
+                const action_string = on ? "uzbroić" : "rozbroić";
+                if (data.status === "ok") {
+                    alert(`Udało się ${action_string} alarm, odpowiedź serwera: ${data.message}`);
+                } else {
+                    alert(`Zapytanie przeszło, lecz wystąpił inny problem, nie udało się ${action_string} alarmu, odpowiedź serwera: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                alert(`Błąd połączenia: ${error}`);
+            });
+        };
+
+        setInterval(() => {
+            const url = ip_alarm + "/get_alarm_status";
+
+            fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({passphrase: "{{ passphrase }}"})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== "ok") {
+                    console.log(`ERROR: get_alarm_status - ${data.message}`);
+                    return;
+                }
+
+                var alarm_status = data.alarm_status;
+                if (alarm_status_old !== alarm_status) {
+                    document.getElementById("alarm_status").innerText = alarm_status ? "AWARIA" : "BRAK AWARII";
+                    alarm_status_old = alarm_status;
+                }
+
+                if (!online) {
+                    online = true;
+                    html_mark_online();
+                }
+            })
+            .catch(error => {
+               console.log(error);
+               online = false;
+               html_mark_offline();
+            }); 
+        }, 1000);
+
+        setInterval(() => {
+            const url = ip_alarm + "/get_alarm_state";
+
+            fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({passphrase: "{{ passphrase }}"})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== "ok") {
+                    console.log(`ERROR: get_alarm_state - ${data.message}`);
+                    return;
+                }
+
+                var alarm_state = data.alarm_state;
+                if (alarm_state_old !== alarm_state) {
+                    document.getElementById("alarm_state").innerText = alarm_state ? "ALARM UZBROJONY" : "ALARM NIEUZBROJONY"; // dla kogos kto bedzie robil wyglad - tutaj javascirptem moze byc zamiast tej linijki zmieniany wyglad strony, np kolor jakiegos kolka z czerownego na zielony
+                    alarm_state_old = alarm_state;
+                }
+                if (!online) {
+                    online = true;
+                    html_mark_online();
+                }
+            })
+            .catch(error => {
+                console.log(error);
+                online = false;
+                html_mark_offline();
+            }); 
+        }, 1000);
+
+        const alarm_accept = () => {
+            const url = ip_alarm + "/alarm_accept";
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({passphrase: "{{ passphrase }}"})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "ok") {
+                    if (data.actually_accepted) {
+                        alert(`Udało się zaakceptować alarm, odpowiedź serwera: ${data.message}`);
+                    } else {
+                        alert(`Udało się wysłać polecenie potwierdzenia alarmu, lecz alarm nie wymagał potwierdzenia, odpowiedź serwera: ${data.message}`)
+                    }
+                } else {
+                    alert(`Zapytanie przeszło, lecz wystąpił inny problem, nie udało się ${action_string} alarmu, odpowiedź serwera: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                alert(`Potwierdzenie alarmu - błąd połączenia: ${error}`);
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <button onclick="change_alarm_state(true)">Uzbrój alarm</button>
+    <button onclick="change_alarm_state(false)">Rozbrój alarm</button>
+    <button onclick="alarm_accept()">Potwierdź alarm</button>
+
+    <div id="alarm_status">
+        BRAK AWARII
+    </div>
+
+    <div id="alarm_state">
+        ALARM NIEUZBROJONY
+    </div>
+
+    <div id="online_offline">
+        OFFLINE
+    </div>
+</body>
+</html>
