@@ -1,28 +1,48 @@
 <!DOCTYPE html>
 <html lang="pl-PL">
 <head>
+    <meta charset="UTF-8">
+    <title>Panel alarmowy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='panel.css') }}">
     <script>
         "use strict";
         const ip_alarm = "{{ ip_alarm }}";
+        const passphrase = "{{ passphrase }}";
         var alarm_status_old = false;
         var alarm_state_old = false;
         var online = false;
 
+        const colors = {
+            green: "#2ecc71",
+            red: "#e74c3c",
+        }
+
         const html_mark_online = () => {
-            document.getElementById("online_offline").innerText = "ONLINE";
+            const el = document.getElementById("online_offline");
+            el.innerText = "ONLINE"; // to ususwa tez poprzednie kolko, dlatego sie nie kumuluja, gdyby nie to to by powstawaly kolejne kolka obok siebie
+            el.prepend(create_indicator(colors.green));
         }
 
         const html_mark_offline = () => {
-            document.getElementById("online_offline").innerText = "OFFLINE";
+            const el = document.getElementById("online_offline");
+            el.innerText = "OFFLINE";
+            el.prepend(create_indicator(colors.red));
         }
-        
+
+        const create_indicator = (color) => {
+            const dot = document.createElement("span");
+            dot.classList.add("indicator");
+            dot.style.backgroundColor = color;
+            return dot;
+        }
+
         const change_alarm_state = on => {
             const action_string = on ? "uzbroić" : "rozbroić";
 
             fetch(ip_alarm + "/change_alarm_state", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({state: on, passphrase: "{{ passphrase }}"})
+                body: JSON.stringify({state: on, passphrase: passphrase})
             })
             .then(response => response.json())
             .then(data => {
@@ -44,7 +64,7 @@
             fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({passphrase: "{{ passphrase }}"})
+                body: JSON.stringify({passphrase: passphrase})
             })
             .then(response => response.json())
             .then(data => {
@@ -55,7 +75,9 @@
 
                 var alarm_status = data.alarm_status;
                 if (alarm_status_old !== alarm_status) {
-                    document.getElementById("alarm_status").innerText = alarm_status ? "AWARIA" : "BRAK AWARII";
+                    const el = document.getElementById("alarm_status");
+                    el.innerText = alarm_status ? "AWARIA" : "BRAK AWARII";
+                    el.prepend(create_indicator(alarm_status ? colors.red : colors.green));
                     alarm_status_old = alarm_status;
                 }
 
@@ -77,7 +99,7 @@
             fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({passphrase: "{{ passphrase }}"})
+                body: JSON.stringify({passphrase: passphrase})
             })
             .then(response => response.json())
             .then(data => {
@@ -88,10 +110,9 @@
 
                 var alarm_state = data.alarm_state;
                 if (alarm_state_old !== alarm_state) {
-                    document.getElementById("alarm_state").innerText = alarm_state ? "ALARM UZBROJONY" : "ALARM NIEUZBROJONY"; // dla kogos kto bedzie robil wyglad - tutaj javascirptem moze byc zamiast tej linijki zmieniany wyglad strony, np kolor jakiegos kolka z czerownego na zielony
+                    document.getElementById("alarm_state").innerText = alarm_state ? "ALARM UZBROJONY" : "ALARM NIEUZBROJONY";
                     alarm_state_old = alarm_state;
                 }
-                
                 if (!online) {
                     online = true;
                     html_mark_online();
@@ -112,7 +133,7 @@
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({passphrase: "{{ passphrase }}"})
+                body: JSON.stringify({passphrase: passphrase})
             })
             .then(response => response.json())
             .then(data => {
@@ -134,20 +155,26 @@
 </head>
 
 <body>
-    <button onclick="change_alarm_state(true)">Uzbrój alarm</button>
-    <button onclick="change_alarm_state(false)">Rozbrój alarm</button>
-    <button onclick="alarm_accept()">Potwierdź alarm</button>
+    <div class="container">
+        <h1>Panel alarmowy</h1>
 
-    <div id="alarm_status">
-        BRAK AWARII
-    </div>
+        <div class="controls">
+            <button onclick="change_alarm_state(true)">Uzbrój alarm</button>
+            <button onclick="change_alarm_state(false)">Rozbrój alarm</button>
+            <button onclick="alarm_accept()">Potwierdź alarm</button>
+        </div>
 
-    <div id="alarm_state">
-        ALARM NIEUZBROJONY
-    </div>
-
-    <div id="online_offline">
-        OFFLINE
+        <div class="status">
+            <div id="alarm_status">
+                <span class="indicator"></span>
+                BRAK AWARII
+            </div>
+            <div id="alarm_state">ALARM NIEUZBROJONY</div>
+            <div id="online_offline">
+                <span class="indicator"></span>
+                OFFLINE
+            </div>
+        </div>
     </div>
 </body>
 </html>

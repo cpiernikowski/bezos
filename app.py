@@ -17,7 +17,7 @@ def home():
         if request.form["password"] == passphrase:
             return render_template("panel.html", ip_alarm=ip_alarm, passphrase=passphrase)
         else:
-            return render_template("login.html")
+            return render_template("login.html", error="Nieprawidłowe hasło.")
 
 if __name__ == "__main__":
     app.run()
