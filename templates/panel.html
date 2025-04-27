@@ -15,7 +15,8 @@
         const colors = {
             green: "#2ecc71",
             red: "#e74c3c",
-        }
+            grey: "#808080",
+        };
 
         const html_mark_online = () => {
             const el = document.getElementById("online_offline");
@@ -77,7 +78,7 @@
                 if (alarm_status_old !== alarm_status) {
                     const el = document.getElementById("alarm_status");
                     el.innerText = alarm_status ? "AWARIA" : "BRAK AWARII";
-                    el.prepend(create_indicator(alarm_status ? colors.red : colors.green));
+                    el.prepend(create_indicator(alarm_status ? colors.red : colors.grey));
                     alarm_status_old = alarm_status;
                 }
 
